@@ -25,14 +25,13 @@ class YouTubeInboxSync:
 
     def run(self) -> SyncSummary:
         print("Fetching YouTube playlist items...")
-        videos = self.youtube_client.fetch_playlist_videos(
-            self.config.youtube_playlist_id
-        )
+        videos = self.youtube_client.fetch_playlist_videos(self.config.youtube_playlist_id)
         print(f"Fetched {len(videos)} YouTube videos.")
 
         videos = self._attach_lengths(videos)
 
         created = 0
+        updated = 0
         skipped = 0
         errors = 0
 
@@ -41,8 +40,20 @@ class YouTubeInboxSync:
                 existing = self.notion_client.find_page_by_video_id(video.video_id)
 
                 if existing:
-                    skipped += 1
-                    print(f"SKIP   {video.title} [{video.video_id}]")
+                    page_id = existing.get("id")
+
+                    if not isinstance(page_id, str):
+                        skipped += 1
+                        print(f"SKIP   {video.title} [{video.video_id}] missing Notion page id")
+                        continue
+
+                    self.notion_client.update_video_page(
+                        page_id,
+                        video,
+                        category=self.config.default_category,
+                    )
+                    updated += 1
+                    print(f"UPDATE {video.title} [{video.video_id}]")
                     continue
 
                 self.notion_client.create_video_page(
@@ -60,6 +71,7 @@ class YouTubeInboxSync:
         return SyncSummary(
             fetched=len(videos),
             created=created,
+            updated_existing=updated,
             skipped_existing=skipped,
             errors=errors,
             synced_at=datetime.now(timezone.utc).isoformat(),
@@ -70,10 +82,7 @@ class YouTubeInboxSync:
         durations = self.youtube_client.fetch_video_durations(video_ids)
 
         return [
-            video.with_length(
-                self.duration_mapper.map_to_length(durations.get(video.video_id))
-            )
-            for video in videos
+            video.with_length(self.duration_mapper.map_to_length(durations.get(video.video_id))) for video in videos
         ]
 
 

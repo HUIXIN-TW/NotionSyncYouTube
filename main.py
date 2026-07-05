@@ -15,6 +15,9 @@ def main() -> None:
     print("\nSync summary:")
     print(summary.to_json())
 
+    if summary.errors > 0:
+        raise SystemExit(1)
+
 
 if __name__ == "__main__":
     main()

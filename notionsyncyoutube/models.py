@@ -24,6 +24,7 @@ class Video:
 class SyncSummary:
     fetched: int
     created: int
+    updated_existing: int
     skipped_existing: int
     errors: int
     synced_at: str

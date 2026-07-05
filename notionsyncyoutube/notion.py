@@ -69,6 +69,23 @@ class NotionClient:
             json_body=payload,
         )
 
+    def update_video_page(
+        self,
+        page_id: str,
+        video: Video,
+        category: str,
+    ) -> dict[str, Any]:
+        payload = {
+            "properties": self._build_video_properties(video, category, None),
+        }
+
+        return self.http_client.request_json(
+            "PATCH",
+            f"{NOTION_PAGES_URL}/{page_id}",
+            headers=self._headers(),
+            json_body=payload,
+        )
+
     def _headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self.token}",
@@ -80,7 +97,7 @@ class NotionClient:
         self,
         video: Video,
         category: str,
-        status: str,
+        status: str | None,
     ) -> dict[str, Any]:
         properties: dict[str, Any] = {
             "Title": {
@@ -97,11 +114,6 @@ class NotionClient:
                     "name": category,
                 },
             },
-            "Status": {
-                "status": {
-                    "name": status,
-                },
-            },
             "URL": {
                 "url": video.url,
             },
@@ -115,6 +127,13 @@ class NotionClient:
                 ],
             },
         }
+
+        if status:
+            properties["Status"] = {
+                "status": {
+                    "name": status,
+                },
+            }
 
         if video.length:
             properties["Length"] = {
