@@ -24,6 +24,8 @@ class YouTubeInboxSync:
         self.duration_mapper = duration_mapper
 
     def run(self) -> SyncSummary:
+        self.notion_client.verify_database_access()
+
         print("Fetching YouTube playlist items...")
         videos = self.youtube_client.fetch_playlist_videos(self.config.youtube_playlist_id)
         print(f"Fetched {len(videos)} YouTube videos.")

@@ -14,6 +14,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from notionsyncyoutube.dotenv import load_dotenv_if_present
 from notionsyncyoutube.duration import DurationMapper
+from notionsyncyoutube.errors import ApiError
+from notionsyncyoutube.config import ConfigError, validate_required_value
 from notionsyncyoutube.http import HttpClient
 from notionsyncyoutube.models import Video
 from notionsyncyoutube.notion import NotionClient
@@ -35,10 +37,10 @@ PLAYLIST_URL_TEMPLATE = "https://www.youtube.com/playlist?list={playlist_id}"
 def require_env(name: str) -> str:
     value = os.environ.get(name)
 
-    if not value:
-        raise RuntimeError(f"Missing required environment variable: {name}")
-
-    return value
+    try:
+        return validate_required_value(name, value)
+    except ConfigError as exc:
+        raise RuntimeError(str(exc)) from exc
 
 
 def env_bool(name: str, default: bool) -> bool:
@@ -305,6 +307,8 @@ def fetch_all_from_youtube_playlist(output_path: Path) -> list[dict]:
 
 def update_notion_from_videos(videos: list[dict]) -> dict:
     notion_client = build_notion_client()
+    notion_client.verify_database_access()
+
     created = 0
     updated = 0
     errors = 0
@@ -401,29 +405,32 @@ def main() -> None:
     args = parse_args()
     cache_file = Path(args.cache_file)
 
-    if args.step == "fetch":
-        fetched_videos = fetch_all_from_youtube_playlist(cache_file)
-        print_summary(
-            {
-                "source": "yt-dlp",
-                "fetched": len(fetched_videos),
-                "cache_file": str(cache_file),
-                "synced_at": None,
-            }
-        )
-        return
+    try:
+        if args.step == "fetch":
+            fetched_videos = fetch_all_from_youtube_playlist(cache_file)
+            print_summary(
+                {
+                    "source": "yt-dlp",
+                    "fetched": len(fetched_videos),
+                    "cache_file": str(cache_file),
+                    "synced_at": None,
+                }
+            )
+            return
 
-    if args.step == "update":
-        summary = update_notion_from_cache(cache_file)
+        if args.step == "update":
+            summary = update_notion_from_cache(cache_file)
+            print_summary(summary)
+            if summary["errors"] > 0:
+                raise SystemExit(1)
+            return
+
+        summary = sync(cache_file)
         print_summary(summary)
         if summary["errors"] > 0:
             raise SystemExit(1)
-        return
-
-    summary = sync(cache_file)
-    print_summary(summary)
-    if summary["errors"] > 0:
-        raise SystemExit(1)
+    except (ApiError, RuntimeError) as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 if __name__ == "__main__":

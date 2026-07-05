@@ -11,6 +11,24 @@ NOTION_VERSION = "2022-06-28"
 
 DEFAULT_CATEGORY = "Youtube"
 DEFAULT_STATUS = "Backlog"
+PLACEHOLDER_VALUES = {
+    "secret_xxx",
+    "your_notion_database_id",
+    "your_youtube_api_key",
+    "your_youtube_playlist_id",
+}
+
+
+def validate_required_value(name: str, value: str | None) -> str:
+    if not value:
+        raise ConfigError(f"Missing required environment variable: {name}")
+
+    if value in PLACEHOLDER_VALUES or value.startswith("your_"):
+        raise ConfigError(
+            f"{name} still uses a placeholder value. Set the real value before running sync."
+        )
+
+    return value
 
 
 @dataclass(frozen=True)
@@ -33,15 +51,21 @@ class Config:
             "NOTION_TOKEN": os.getenv("NOTION_TOKEN"),
             "NOTION_DATABASE_ID": os.getenv("NOTION_DATABASE_ID"),
         }
-        missing = [name for name, value in required_values.items() if not value]
-
-        if missing:
-            joined = ", ".join(missing)
-            raise ConfigError(f"Missing required environment variable(s): {joined}")
-
         return cls(
-            youtube_api_key=required_values["YOUTUBE_API_KEY"] or "",
-            youtube_playlist_id=required_values["YOUTUBE_PLAYLIST_ID"] or "",
-            notion_token=required_values["NOTION_TOKEN"] or "",
-            notion_database_id=required_values["NOTION_DATABASE_ID"] or "",
+            youtube_api_key=validate_required_value(
+                "YOUTUBE_API_KEY",
+                required_values["YOUTUBE_API_KEY"],
+            ),
+            youtube_playlist_id=validate_required_value(
+                "YOUTUBE_PLAYLIST_ID",
+                required_values["YOUTUBE_PLAYLIST_ID"],
+            ),
+            notion_token=validate_required_value(
+                "NOTION_TOKEN",
+                required_values["NOTION_TOKEN"],
+            ),
+            notion_database_id=validate_required_value(
+                "NOTION_DATABASE_ID",
+                required_values["NOTION_DATABASE_ID"],
+            ),
         )

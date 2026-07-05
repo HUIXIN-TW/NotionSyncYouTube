@@ -22,6 +22,13 @@ class NotionClient:
         self.notion_version = notion_version
         self.http_client = http_client
 
+    def verify_database_access(self) -> None:
+        self.http_client.request_json(
+            "GET",
+            f"https://api.notion.com/v1/databases/{self.database_id}",
+            headers=self._headers(),
+        )
+
     def find_page_by_video_id(self, video_id: str) -> dict[str, Any] | None:
         url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
         payload = {
