@@ -66,10 +66,16 @@ NOTION_DATABASE_ID="your_notion_database_id"
 Optional:
 
 ```bash
+NOTION_DATA_SOURCE_ID="your_notion_data_source_id"
+NOTION_USE_DEFAULT_TEMPLATE=false
 YOUTUBE_PLAYLIST_CACHE_FILE="/tmp/youtube-playlist.json"
 YOUTUBE_ENRICH_LENGTHS=true
 YTDLP_ENABLE_REMOTE_COMPONENTS=false
 ```
+
+Set `NOTION_DATA_SOURCE_ID` and `NOTION_USE_DEFAULT_TEMPLATE=true` to apply the
+Notion data source's default template when creating new pages. Existing pages
+are not templated again; they only receive metadata updates.
 
 `YOUTUBE_ENRICH_LENGTHS=false` skips per-video duration fetching. This is faster
 and is the safer default for scheduled or Lambda-style runs.
@@ -108,6 +114,7 @@ Length options must match exactly:
 
 - `fetch` fails if `yt-dlp` cannot extract the playlist.
 - `update` creates missing Notion pages.
+- New pages apply the default Notion template when `NOTION_USE_DEFAULT_TEMPLATE=true`.
 - Existing pages are updated by `Video ID`.
 - Existing page `Status` is preserved.
 - `update` and `sync` exit non-zero when any page update/create fails.

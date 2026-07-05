@@ -15,13 +15,17 @@ if str(PROJECT_ROOT) not in sys.path:
 from notionsyncyoutube.dotenv import load_dotenv_if_present
 from notionsyncyoutube.duration import DurationMapper
 from notionsyncyoutube.errors import ApiError
-from notionsyncyoutube.config import ConfigError, validate_required_value
+from notionsyncyoutube.config import (
+    ConfigError,
+    NOTION_DATA_SOURCE_VERSION,
+    NOTION_VERSION,
+    validate_optional_value,
+    validate_required_value,
+)
 from notionsyncyoutube.http import HttpClient
 from notionsyncyoutube.models import Video
 from notionsyncyoutube.notion import NotionClient
 
-
-NOTION_VERSION = "2022-06-28"
 
 DEFAULT_CATEGORY = "Youtube"
 DEFAULT_STATUS = "Backlog"
@@ -39,6 +43,15 @@ def require_env(name: str) -> str:
 
     try:
         return validate_required_value(name, value)
+    except ConfigError as exc:
+        raise RuntimeError(str(exc)) from exc
+
+
+def optional_env(name: str) -> str | None:
+    value = os.environ.get(name)
+
+    try:
+        return validate_optional_value(name, value)
     except ConfigError as exc:
         raise RuntimeError(str(exc)) from exc
 
@@ -208,10 +221,14 @@ def enrich_video_lengths(videos: list[dict]) -> list[dict]:
 
 
 def build_notion_client() -> NotionClient:
+    data_source_id = optional_env("NOTION_DATA_SOURCE_ID")
+
     return NotionClient(
         token=require_env("NOTION_TOKEN"),
         database_id=require_env("NOTION_DATABASE_ID"),
-        notion_version=NOTION_VERSION,
+        data_source_id=data_source_id,
+        notion_version=os.getenv("NOTION_VERSION")
+        or (NOTION_DATA_SOURCE_VERSION if data_source_id else NOTION_VERSION),
         http_client=HttpClient(),
     )
 
@@ -307,7 +324,9 @@ def fetch_all_from_youtube_playlist(output_path: Path) -> list[dict]:
 
 def update_notion_from_videos(videos: list[dict]) -> dict:
     notion_client = build_notion_client()
+    use_default_template = env_bool("NOTION_USE_DEFAULT_TEMPLATE", False)
     notion_client.verify_database_access()
+    notion_client.verify_create_target(use_default_template)
 
     created = 0
     updated = 0
@@ -339,6 +358,7 @@ def update_notion_from_videos(videos: list[dict]) -> dict:
                 video_model,
                 category=DEFAULT_CATEGORY,
                 status=DEFAULT_STATUS,
+                use_default_template=use_default_template,
             )
             created += 1
             print(f"CREATE {video_model.title} [{video_model.video_id}]")

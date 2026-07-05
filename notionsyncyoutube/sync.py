@@ -25,6 +25,7 @@ class YouTubeInboxSync:
 
     def run(self) -> SyncSummary:
         self.notion_client.verify_database_access()
+        self.notion_client.verify_create_target(self.config.use_default_template)
 
         print("Fetching YouTube playlist items...")
         videos = self.youtube_client.fetch_playlist_videos(self.config.youtube_playlist_id)
@@ -62,6 +63,7 @@ class YouTubeInboxSync:
                     video,
                     category=self.config.default_category,
                     status=self.config.default_status,
+                    use_default_template=self.config.use_default_template,
                 )
                 created += 1
                 print(f"CREATE {video.title} [{video.video_id}]")
@@ -94,6 +96,7 @@ def build_sync(config: Config) -> YouTubeInboxSync:
     notion_client = NotionClient(
         token=config.notion_token,
         database_id=config.notion_database_id,
+        data_source_id=config.notion_data_source_id,
         notion_version=config.notion_version,
         http_client=http_client,
     )

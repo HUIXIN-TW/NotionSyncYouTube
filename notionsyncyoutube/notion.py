@@ -10,15 +10,18 @@ NOTION_PAGES_URL = "https://api.notion.com/v1/pages"
 
 
 class NotionClient:
+
     def __init__(
         self,
         token: str,
         database_id: str,
+        data_source_id: str | None,
         notion_version: str,
         http_client: HttpClient,
     ) -> None:
         self.token = token
         self.database_id = database_id
+        self.data_source_id = data_source_id
         self.notion_version = notion_version
         self.http_client = http_client
 
@@ -29,8 +32,25 @@ class NotionClient:
             headers=self._headers(),
         )
 
+        if self.data_source_id:
+            self.http_client.request_json(
+                "GET",
+                f"https://api.notion.com/v1/data_sources/{self.data_source_id}",
+                headers=self._headers(),
+            )
+
+    def verify_create_target(self, use_default_template: bool) -> None:
+        if use_default_template and not self.data_source_id:
+            raise RuntimeError(
+                "NOTION_DATA_SOURCE_ID is required when NOTION_USE_DEFAULT_TEMPLATE=true"
+            )
+
     def find_page_by_video_id(self, video_id: str) -> dict[str, Any] | None:
-        url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+        if self.data_source_id:
+            url = f"https://api.notion.com/v1/data_sources/{self.data_source_id}/query"
+        else:
+            url = f"https://api.notion.com/v1/databases/{self.database_id}/query"
+
         payload = {
             "filter": {
                 "property": "Video ID",
@@ -61,13 +81,17 @@ class NotionClient:
         video: Video,
         category: str,
         status: str,
+        use_default_template: bool = False,
     ) -> dict[str, Any]:
         payload = {
-            "parent": {
-                "database_id": self.database_id,
-            },
+            "parent": self._build_create_parent(use_default_template),
             "properties": self._build_video_properties(video, category, status),
         }
+
+        if use_default_template:
+            payload["template"] = {
+                "type": "default",
+            }
 
         return self.http_client.request_json(
             "POST",
@@ -98,6 +122,28 @@ class NotionClient:
             "Authorization": f"Bearer {self.token}",
             "Notion-Version": self.notion_version,
             "Content-Type": "application/json",
+        }
+
+    def _build_create_parent(self, use_default_template: bool) -> dict[str, str]:
+        if use_default_template:
+            if not self.data_source_id:
+                raise RuntimeError(
+                    "NOTION_DATA_SOURCE_ID is required when NOTION_USE_DEFAULT_TEMPLATE=true"
+                )
+
+            return {
+                "type": "data_source_id",
+                "data_source_id": self.data_source_id,
+            }
+
+        if self.data_source_id:
+            return {
+                "type": "data_source_id",
+                "data_source_id": self.data_source_id,
+            }
+
+        return {
+            "database_id": self.database_id,
         }
 
     def _build_video_properties(

@@ -54,10 +54,18 @@ the playlist URL internally.
 Optional:
 
 ```bash
+NOTION_DATA_SOURCE_ID="your_notion_data_source_id"
+NOTION_USE_DEFAULT_TEMPLATE=false
 YOUTUBE_ENRICH_LENGTHS=true
 YOUTUBE_PLAYLIST_CACHE_FILE="/tmp/youtube-playlist.json"
 YTDLP_ENABLE_REMOTE_COMPONENTS=false
 ```
+
+Set `NOTION_DATA_SOURCE_ID` and `NOTION_USE_DEFAULT_TEMPLATE=true` to apply the
+Notion data source's default template when creating new pages. Existing pages
+are never templated again; they only receive metadata updates. Template support
+uses Notion's data source API, so the sync automatically uses Notion API version
+`2025-09-03` when `NOTION_DATA_SOURCE_ID` is present.
 
 `YTDLP_ENABLE_REMOTE_COMPONENTS=true` lets `yt-dlp` fetch remote extractor
 components at runtime. Keep it disabled unless you explicitly need it.
@@ -124,6 +132,7 @@ The `Length` select options must match exactly:
 ## Sync Behavior
 
 - New videos create new Notion pages.
+- New pages apply the Notion default template when `NOTION_USE_DEFAULT_TEMPLATE=true`.
 - Existing pages are found by `Video ID`.
 - Existing pages are updated for metadata such as title, URL, category, and length.
 - Existing page `Status` is preserved, so `Active` or `Done` is not reset to `Backlog`.
