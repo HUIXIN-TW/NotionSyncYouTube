@@ -67,7 +67,7 @@ Optional:
 
 ```bash
 NOTION_DATA_SOURCE_ID="your_notion_data_source_id"
-NOTION_USE_DEFAULT_TEMPLATE=false
+NOTION_USE_DEFAULT_TEMPLATE=true
 YOUTUBE_PLAYLIST_CACHE_FILE="/tmp/youtube-playlist.json"
 YOUTUBE_ENRICH_LENGTHS=true
 YTDLP_ENABLE_REMOTE_COMPONENTS=false
@@ -77,11 +77,16 @@ Set `NOTION_DATA_SOURCE_ID` and `NOTION_USE_DEFAULT_TEMPLATE=true` to apply the
 Notion data source's default template when creating new pages. Existing pages
 are not templated again; they only receive metadata updates.
 
-`YOUTUBE_ENRICH_LENGTHS=false` skips per-video duration fetching. This is faster
-and is the safer default for scheduled or Lambda-style runs.
+`YOUTUBE_ENRICH_LENGTHS=false` skips per-video duration fetching when a faster
+metadata-only sync is preferred.
 
 `YTDLP_ENABLE_REMOTE_COMPONENTS=true` lets `yt-dlp` fetch remote extractor
 components at runtime. Keep it disabled unless a local run needs it.
+
+The Lambda build bundles a pinned Linux x86_64 Deno runtime and matching
+`yt-dlp-ejs` package. Local runs use Deno when available, then fall back to
+Node.js. Duration enrichment uses playlist metadata first and only makes a
+per-video request when the playlist entry has no duration.
 
 ## Notion Schema
 

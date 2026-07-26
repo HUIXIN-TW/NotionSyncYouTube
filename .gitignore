@@ -3,3 +3,6 @@
 youtube-playlist.json
 __pycache__/
 *.py[cod]
+.pulumi/
+infra/Pulumi.*.yaml
+.DS_Store
