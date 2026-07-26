@@ -74,9 +74,8 @@ def build_ytdlp_opts(*, extract_flat: bool = False) -> dict:
     """
     Build yt-dlp options.
 
-    YouTube extraction increasingly requires a JavaScript runtime.
-    Locally, Node.js is usually available.
-    In AWS Lambda, this only works if Node is included in the runtime/image/layer.
+    YouTube extraction requires a JavaScript runtime.
+    The Lambda bundle includes Deno, while local runs may use Deno or Node.js.
 
     remote_components enables yt-dlp to fetch the EJS challenge solver when needed.
     This reduces YouTube n-challenge warnings.
@@ -93,16 +92,30 @@ def build_ytdlp_opts(*, extract_flat: bool = False) -> dict:
     if extract_flat:
         opts["extract_flat"] = True
 
-    node_path = shutil.which("node")
+    bundled_deno_path = Path(__file__).resolve().parent.parent / "bin" / "deno"
+    deno_path = shutil.which("deno")
+    if bundled_deno_path.is_file():
+        deno_path = str(bundled_deno_path)
 
-    if node_path:
+    if deno_path:
         opts["js_runtimes"] = {
-            "node": {
-                "path": node_path,
+            "deno": {
+                "path": deno_path,
             },
         }
     else:
-        print("WARN   node runtime not found; " "yt-dlp may emit JavaScript runtime warnings.")
+        node_path = shutil.which("node")
+        if node_path:
+            opts["js_runtimes"] = {
+                "node": {
+                    "path": node_path,
+                },
+            }
+        else:
+            print(
+                "WARN   no supported JavaScript runtime found; "
+                "yt-dlp may emit JavaScript runtime warnings."
+            )
 
     return opts
 
@@ -137,11 +150,18 @@ def fetch_playlist_items_with_ytdlp(playlist_url: str) -> list[dict]:
         if title in {"Deleted video", "Private video"}:
             continue
 
+        duration = entry.get("duration")
+        if isinstance(duration, (int, float)):
+            duration = int(duration)
+        else:
+            duration = None
+
         videos.append(
             {
                 "video_id": video_id,
                 "title": title,
                 "url": f"https://www.youtube.com/watch?v={video_id}",
+                "duration_seconds": duration,
             }
         )
 
@@ -191,8 +211,13 @@ def enrich_video_lengths(videos: list[dict]) -> list[dict]:
 
     for index, video in enumerate(videos, start=1):
         try:
-            detail = fetch_video_detail_with_ytdlp(video["url"])
-            duration = detail.get("duration") if detail else None
+            duration = video.get("duration_seconds")
+            duration_source = "playlist"
+
+            if duration is None:
+                detail = fetch_video_detail_with_ytdlp(video["url"])
+                duration = detail.get("duration") if detail else None
+                duration_source = "video"
 
             video["duration_seconds"] = duration
             video["length"] = map_duration_seconds_to_length(duration)
@@ -203,7 +228,8 @@ def enrich_video_lengths(videos: list[dict]) -> list[dict]:
                 f"DETAIL {index}/{len(videos)} "
                 f"{video['title']} [{video['video_id']}] "
                 f"{duration_label} "
-                f"{length_label}"
+                f"{length_label} "
+                f"source={duration_source}"
             )
 
         except Exception as exc:

@@ -1,0 +1,6 @@
+name: notion-sync-youtube-infra
+runtime:
+  name: python
+  options:
+    virtualenv: ../.venv
+description: Personal infrastructure for daily YouTube playlist to Notion synchronization.

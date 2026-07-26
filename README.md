@@ -55,7 +55,7 @@ Optional:
 
 ```bash
 NOTION_DATA_SOURCE_ID="your_notion_data_source_id"
-NOTION_USE_DEFAULT_TEMPLATE=false
+NOTION_USE_DEFAULT_TEMPLATE=true
 YOUTUBE_ENRICH_LENGTHS=true
 YOUTUBE_PLAYLIST_CACHE_FILE="/tmp/youtube-playlist.json"
 YTDLP_ENABLE_REMOTE_COMPONENTS=false
@@ -166,4 +166,66 @@ NOTION_TOKEN="secret_xxx"
 NOTION_DATABASE_ID="your_notion_database_id"
 
 uv run python main.py
+```
+
+## Deploy to AWS Lambda with Pulumi
+
+The `infra/` Pulumi project deploys `handler.lambda_handler` and creates an
+EventBridge schedule that runs once per day at 00:00 UTC. The Lambda uses the
+`yt-dlp` workflow, so a public playlist does not require a YouTube API key. The
+build bundles a pinned Linux x86_64 Deno runtime and matching `yt-dlp-ejs`
+solver so yt-dlp can handle YouTube's JavaScript challenges in Lambda.
+Duration enrichment uses flat playlist metadata first and only falls back to a
+per-video request when a playlist entry does not include duration.
+
+Install and authenticate the AWS CLI and Pulumi CLI first, then install the
+Pulumi dependencies and build the Lambda bundle:
+
+```bash
+uv pip install -r infra/requirements.txt
+./script/build-lambda.sh
+cd infra
+pulumi stack init personal-sandbox
+```
+
+Configure the required values. Pulumi stores the token as an encrypted stack
+secret. The local, gitignored stack configuration pins deployment to the
+`personal-sandbox` AWS profile and account `590184055616`:
+
+```txt
+YouTubePlaylistId
+NotionToken
+NotionDatabaseId
+```
+
+```bash
+pulumi config set youtubePlaylistId "$YOUTUBE_PLAYLIST_ID"
+pulumi config set --secret notionToken "$NOTION_TOKEN"
+pulumi config set notionDatabaseId "$NOTION_DATABASE_ID"
+pulumi config set notionDataSourceId "${NOTION_DATA_SOURCE_ID:-}"
+pulumi config set notionUseDefaultTemplate "${NOTION_USE_DEFAULT_TEMPLATE:-true}"
+pulumi config set youtubeEnrichLengths "${YOUTUBE_ENRICH_LENGTHS:-true}"
+pulumi up
+```
+
+`NotionDataSourceId`, `NotionUseDefaultTemplate`, and `YoutubeEnrichLengths` are
+configurable. The token is passed to Lambda as an environment variable. For a
+production deployment, consider replacing it with an AWS Secrets Manager
+reference and granting the function read-only access to that secret.
+
+To invoke the deployed function once immediately:
+
+```bash
+aws lambda invoke \
+  --profile personal-sandbox \
+  --function-name "$(pulumi stack output notion-sync-youtube_name)" \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{}' /tmp/youtube-notion-sync-response.json
+cat /tmp/youtube-notion-sync-response.json
+```
+
+To inspect scheduled executions:
+
+```bash
+aws logs tail /aws/lambda/<function-name> --follow
 ```
