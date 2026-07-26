@@ -15,6 +15,7 @@ stack_env = config.require("env")
 aws_profile = config.require("awsProfile")
 expected_aws_account_id = config.require("expectedAwsAccountId")
 lambda_configs: dict[str, dict[str, Any]] = config.require_object("lambda")
+aws_region = aws_config.require("region")
 
 PLACEHOLDER_VALUES = {
     "secret_xxx",
@@ -34,8 +35,13 @@ youtube_playlist_id = validate_config_value(
     "youtubePlaylistId",
     config.require("youtubePlaylistId"),
 )
-notion_token = config.require_secret("notionToken").apply(
-    lambda value: validate_config_value("notionToken", value)
+notion_token_parameter_name = validate_config_value(
+    "notionTokenParameterName",
+    config.require("notionTokenParameterName"),
+)
+notion_token_parameter_arn = (
+    f"arn:aws:ssm:{aws_region}:{expected_aws_account_id}:parameter/"
+    f"{notion_token_parameter_name.lstrip('/')}"
 )
 notion_database_id = validate_config_value(
     "notionDatabaseId",
@@ -61,7 +67,7 @@ if not bundle_dir.is_dir():
 
 personal_aws = aws.Provider(
     "personal-sandbox",
-    region=aws_config.require("region"),
+    region=aws_region,
     profile=aws_profile,
     allowed_account_ids=[expected_aws_account_id],
 )
@@ -80,6 +86,7 @@ def resource_options(
 def create_lambda_execution_role(resource_base_name: str) -> tuple[
     aws.iam.Role,
     aws.iam.RolePolicyAttachment,
+    aws.iam.RolePolicy,
 ]:
     role = aws.iam.Role(
         f"{resource_base_name}-exec-role",
@@ -106,14 +113,35 @@ def create_lambda_execution_role(resource_base_name: str) -> tuple[
         opts=resource_options(),
     )
 
-    return role, policy_attachment
+    parameter_policy = aws.iam.RolePolicy(
+        f"{resource_base_name}-notion-token-policy",
+        name=f"{resource_base_name}-notion-token-policy",
+        role=role.id,
+        policy=json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": "ssm:GetParameter",
+                        "Resource": notion_token_parameter_arn,
+                    }
+                ],
+            }
+        ),
+        opts=resource_options(),
+    )
+
+    return role, policy_attachment, parameter_policy
 
 
 lambda_exports: dict[str, dict[str, pulumi.Output[str]]] = {}
 
 for function_key, function_config in lambda_configs.items():
     resource_base_name = f"{stack_env}-fn-{function_key}"
-    role, policy_attachment = create_lambda_execution_role(resource_base_name)
+    role, policy_attachment, parameter_policy = create_lambda_execution_role(
+        resource_base_name
+    )
 
     log_group = aws.cloudwatch.LogGroup(
         f"{resource_base_name}-log-group",
@@ -136,7 +164,7 @@ for function_key, function_config in lambda_configs.items():
         environment=aws.lambda_.FunctionEnvironmentArgs(
             variables={
                 "YOUTUBE_PLAYLIST_ID": youtube_playlist_id,
-                "NOTION_TOKEN": notion_token,
+                "NOTION_TOKEN_PARAMETER_NAME": notion_token_parameter_name,
                 "NOTION_DATABASE_ID": notion_database_id,
                 "NOTION_DATA_SOURCE_ID": notion_data_source_id,
                 "NOTION_USE_DEFAULT_TEMPLATE": str(
@@ -145,7 +173,9 @@ for function_key, function_config in lambda_configs.items():
                 "YOUTUBE_ENRICH_LENGTHS": str(youtube_enrich_lengths).lower(),
             }
         ),
-        opts=resource_options(depends_on=[log_group, policy_attachment]),
+        opts=resource_options(
+            depends_on=[log_group, policy_attachment, parameter_policy]
+        ),
     )
 
     schedule = aws.cloudwatch.EventRule(

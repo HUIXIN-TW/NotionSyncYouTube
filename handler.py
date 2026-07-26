@@ -1,9 +1,29 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
+
+
+def _load_notion_token_from_parameter_store() -> None:
+    parameter_name = os.environ.get("NOTION_TOKEN_PARAMETER_NAME")
+    if not parameter_name:
+        raise RuntimeError("NOTION_TOKEN_PARAMETER_NAME is required")
+
+    import boto3
+
+    response = boto3.client("ssm").get_parameter(
+        Name=parameter_name,
+        WithDecryption=True,
+    )
+    parameter = response.get("Parameter", {})
+    token = parameter.get("Value")
+    if not isinstance(token, str) or not token:
+        raise RuntimeError(f"SSM parameter {parameter_name} has no string value")
+
+    os.environ["NOTION_TOKEN"] = token
 
 
 def _load_quick_sync_module() -> Any:
@@ -26,6 +46,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     """
     del event, context
 
+    _load_notion_token_from_parameter_store()
     quick_sync = _load_quick_sync_module()
     cache_path = Path(tempfile.gettempdir()) / "youtube-playlist.json"
     result = quick_sync.sync(cache_path)

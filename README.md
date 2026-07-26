@@ -188,19 +188,33 @@ cd infra
 pulumi stack init personal-sandbox
 ```
 
-Configure the required values. Pulumi stores the token as an encrypted stack
-secret. The local, gitignored stack configuration pins deployment to the
-`personal-sandbox` AWS profile and account `590184055616`:
+Store or rotate the Notion token in SSM Parameter Store as a `SecureString`.
+This command is repeatable and keeps the value out of Pulumi state and Lambda
+environment configuration:
+
+```bash
+aws ssm put-parameter \
+  --profile personal-sandbox \
+  --region ap-southeast-2 \
+  --name NOTION_TOKEN \
+  --type SecureString \
+  --value "$NOTION_TOKEN" \
+  --overwrite
+```
+
+Configure the required non-secret Pulumi values. The local, gitignored stack
+configuration pins deployment to the `personal-sandbox` AWS profile and account
+`590184055616`:
 
 ```txt
 YouTubePlaylistId
-NotionToken
+NotionTokenParameterName
 NotionDatabaseId
 ```
 
 ```bash
 pulumi config set youtubePlaylistId "$YOUTUBE_PLAYLIST_ID"
-pulumi config set --secret notionToken "$NOTION_TOKEN"
+pulumi config set notionTokenParameterName NOTION_TOKEN
 pulumi config set notionDatabaseId "$NOTION_DATABASE_ID"
 pulumi config set notionDataSourceId "${NOTION_DATA_SOURCE_ID:-}"
 pulumi config set notionUseDefaultTemplate "${NOTION_USE_DEFAULT_TEMPLATE:-true}"
@@ -209,9 +223,9 @@ pulumi up
 ```
 
 `NotionDataSourceId`, `NotionUseDefaultTemplate`, and `YoutubeEnrichLengths` are
-configurable. The token is passed to Lambda as an environment variable. For a
-production deployment, consider replacing it with an AWS Secrets Manager
-reference and granting the function read-only access to that secret.
+configurable. Lambda receives only the SSM parameter name and has
+`ssm:GetParameter` permission scoped to that single parameter. The handler
+retrieves and decrypts the token at invocation time.
 
 To invoke the deployed function once immediately:
 
