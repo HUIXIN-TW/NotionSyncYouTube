@@ -179,10 +179,10 @@ for function_key, function_config in lambda_configs.items():
     )
 
     schedule = aws.cloudwatch.EventRule(
-        f"{resource_base_name}-daily-schedule",
-        name=f"{resource_base_name}-daily-schedule",
-        description="Run the YouTube to Notion sync once per day at 00:00 UTC.",
-        schedule_expression="cron(0 0 * * ? *)",
+        f"{resource_base_name}-every-four-hours-schedule",
+        name=f"{resource_base_name}-every-four-hours-schedule",
+        description="Run the YouTube to Notion sync every four hours.",
+        schedule_expression="cron(0 0/4 * * ? *)",
         state="ENABLED",
         opts=resource_options(),
     )
@@ -197,9 +197,10 @@ for function_key, function_config in lambda_configs.items():
     )
 
     aws.cloudwatch.EventTarget(
-        f"{resource_base_name}-daily-schedule-target",
+        f"{resource_base_name}-every-four-hours-schedule-target",
         rule=schedule.name,
         arn=function.arn,
+        target_id=f"{function_key}-lambda",
         input=json.dumps({}),
         opts=resource_options(depends_on=[invoke_permission]),
     )

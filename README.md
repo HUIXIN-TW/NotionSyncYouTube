@@ -171,10 +171,11 @@ uv run python main.py
 ## Deploy to AWS Lambda with Pulumi
 
 The `infra/` Pulumi project deploys `handler.lambda_handler` and creates an
-EventBridge schedule that runs once per day at 00:00 UTC. The Lambda uses the
-`yt-dlp` workflow, so a public playlist does not require a YouTube API key. The
-build bundles a pinned Linux x86_64 Deno runtime and matching `yt-dlp-ejs`
-solver so yt-dlp can handle YouTube's JavaScript challenges in Lambda.
+EventBridge schedule that runs every four hours, starting at 00:00 UTC. The
+Lambda uses the `yt-dlp` workflow, so a public playlist does not require a
+YouTube API key. The build bundles a pinned Linux x86_64 Deno runtime and
+matching `yt-dlp-ejs` solver so yt-dlp can handle YouTube's JavaScript
+challenges in Lambda.
 Duration enrichment uses flat playlist metadata first and only falls back to a
 per-video request when a playlist entry does not include duration.
 
