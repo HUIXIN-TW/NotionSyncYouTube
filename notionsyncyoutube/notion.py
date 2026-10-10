@@ -7,6 +7,7 @@ from notionsyncyoutube.models import Video
 
 
 NOTION_PAGES_URL = "https://api.notion.com/v1/pages"
+VIDEO_FORMAT = "Video"
 
 
 class NotionClient:
@@ -79,13 +80,12 @@ class NotionClient:
     def create_video_page(
         self,
         video: Video,
-        category: str,
         status: str,
         use_default_template: bool = False,
     ) -> dict[str, Any]:
         payload = {
             "parent": self._build_create_parent(use_default_template),
-            "properties": self._build_video_properties(video, category, status),
+            "properties": self._build_video_properties(video, status),
         }
 
         if use_default_template:
@@ -104,10 +104,9 @@ class NotionClient:
         self,
         page_id: str,
         video: Video,
-        category: str,
     ) -> dict[str, Any]:
         payload = {
-            "properties": self._build_video_properties(video, category, None),
+            "properties": self._build_video_properties(video, None),
         }
 
         return self.http_client.request_json(
@@ -149,7 +148,6 @@ class NotionClient:
     def _build_video_properties(
         self,
         video: Video,
-        category: str,
         status: str | None,
     ) -> dict[str, Any]:
         properties: dict[str, Any] = {
@@ -162,9 +160,9 @@ class NotionClient:
                     },
                 ],
             },
-            "Category": {
+            "Format": {
                 "select": {
-                    "name": category,
+                    "name": VIDEO_FORMAT,
                 },
             },
             "URL": {

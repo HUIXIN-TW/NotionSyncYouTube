@@ -95,7 +95,7 @@ Required properties:
 | Property   | Type      | Notes                                      |
 | ---------- | --------- | ------------------------------------------ |
 | `Title`    | Title     | Video title                                |
-| `Category` | Select    | Set to `Youtube`                           |
+| `Format`   | Select    | Set to `Video`                             |
 | `Status`   | Status    | Set to `Backlog` only for newly created pages |
 | `URL`      | URL       | YouTube watch URL                          |
 | `Video ID` | Rich text | Deduplication key                          |
@@ -124,3 +124,5 @@ Length options must match exactly:
 - Existing page `Status` is preserved.
 - `update` and `sync` exit non-zero when any page update/create fails.
 - The default cache path is the OS temp directory, usually `/tmp/youtube-playlist.json`.
+
+For the one-time Category-to-Format migration, see the backfill section in the root README.

@@ -27,7 +27,6 @@ from notionsyncyoutube.models import Video
 from notionsyncyoutube.notion import NotionClient
 
 
-DEFAULT_CATEGORY = "Youtube"
 DEFAULT_STATUS = "Backlog"
 DEFAULT_CACHE_FILE = str(Path(tempfile.gettempdir()) / "youtube-playlist.json")
 PLAYLIST_URL_TEMPLATE = "https://www.youtube.com/playlist?list={playlist_id}"
@@ -374,7 +373,6 @@ def update_notion_from_videos(videos: list[dict]) -> dict:
                 notion_client.update_video_page(
                     page_id,
                     video_model,
-                    category=DEFAULT_CATEGORY,
                 )
                 updated += 1
                 print(f"UPDATE {video_model.title} [{video_model.video_id}]")
@@ -382,7 +380,6 @@ def update_notion_from_videos(videos: list[dict]) -> dict:
 
             notion_client.create_video_page(
                 video_model,
-                category=DEFAULT_CATEGORY,
                 status=DEFAULT_STATUS,
                 use_default_template=use_default_template,
             )

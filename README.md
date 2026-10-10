@@ -109,7 +109,7 @@ The Notion database must contain these properties:
 | Property   | Type      | Description                                     |
 | ---------- | --------- | ----------------------------------------------- |
 | `Title`    | Title     | Video title from YouTube.                       |
-| `Category` | Select    | Static value set to `Youtube`.                  |
+| `Format`   | Select    | Static value set to `Video`.                    |
 | `Status`   | Status    | Set to `Backlog` only when creating new pages.  |
 | `URL`      | URL       | Canonical YouTube watch URL.                    |
 | `Video ID` | Rich text | Stable YouTube video ID used for deduplication. |
@@ -134,8 +134,10 @@ The `Length` select options must match exactly:
 - New videos create new Notion pages.
 - New pages apply the Notion default template when `NOTION_USE_DEFAULT_TEMPLATE=true`.
 - Existing pages are found by `Video ID`.
-- Existing pages are updated for metadata such as title, URL, category, and length.
+- Existing pages are updated for metadata such as title, URL, format, and length.
 - Existing page `Status` is preserved, so `Active` or `Done` is not reset to `Backlog`.
+- `Category` is not required, read, or written; existing values are left untouched.
+- The `Format` select option `Video` must exist in the Notion data source.
 - Deleted/private YouTube placeholders are skipped.
 - The script does not delete Notion pages or remove videos from YouTube.
 
@@ -244,3 +246,27 @@ To inspect scheduled executions:
 ```bash
 aws logs tail /aws/lambda/<function-name> --follow
 ```
+
+## One-Time Notion Format Backfill
+
+To migrate existing pages without altering `Category` or overwriting a populated
+`Format`, use the following dry-run first (local environment with the Notion
+integration token and `NOTION_DATA_SOURCE_ID`):
+
+```bash
+uv run python script/backfill-format.py
+uv run python script/backfill-format.py --apply
+```
+
+This script maps legacy `Youtube -> Video`, `Podcast/Audible -> Audio`, and
+`Kindle -> Ebook`. Generic `Book` entries are left unchanged because their
+actual medium cannot be determined from the category. `EPUB` and `PDF` are
+available in the new Format schema, but neither is inferred from Book alone.
+
+After checking that the remaining YouTube entries all have `Format = Video`,
+change the Notion YouTube and ActiveVideo view filters from `Category = Youtube`
+to `Format = Video`. Keep the legacy views unchanged until the backfill
+finishes to prevent existing items disappearing from view. This migration is
+not part of the scheduled Lambda sync.
+
+For tests: `python -m unittest discover -s tests -v`.
