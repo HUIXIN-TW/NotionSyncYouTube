@@ -53,6 +53,7 @@ class YouTubeInboxSync:
                     self.notion_client.update_video_page(
                         page_id,
                         video,
+                        existing_page=existing,
                     )
                     updated += 1
                     print(f"UPDATE {video.title} [{video.video_id}]")

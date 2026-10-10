@@ -10,6 +10,7 @@ from notionsyncyoutube.errors import ConfigError
 NOTION_VERSION = "2022-06-28"
 NOTION_DATA_SOURCE_VERSION = "2025-09-03"
 
+DEFAULT_CATEGORY = "Youtube"
 DEFAULT_STATUS = "Backlog"
 DEFAULT_USE_DEFAULT_TEMPLATE = False
 PLACEHOLDER_VALUES = {
@@ -57,6 +58,7 @@ class Config:
     notion_database_id: str
     notion_data_source_id: str | None = None
     notion_version: str = NOTION_VERSION
+    default_category: str = DEFAULT_CATEGORY
     default_status: str = DEFAULT_STATUS
     use_default_template: bool = DEFAULT_USE_DEFAULT_TEMPLATE
 
