@@ -104,9 +104,10 @@ class NotionClient:
         self,
         page_id: str,
         video: Video,
+        existing_page: dict[str, Any],
     ) -> dict[str, Any]:
         payload = {
-            "properties": self._build_video_properties(video, None),
+            "properties": self._build_video_properties(video, None, existing_page),
         }
 
         return self.http_client.request_json(
@@ -149,6 +150,7 @@ class NotionClient:
         self,
         video: Video,
         status: str | None,
+        existing_page: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         properties: dict[str, Any] = {
             "Title": {
@@ -159,11 +161,6 @@ class NotionClient:
                         },
                     },
                 ],
-            },
-            "Format": {
-                "select": {
-                    "name": VIDEO_FORMAT,
-                },
             },
             "URL": {
                 "url": video.url,
@@ -178,6 +175,22 @@ class NotionClient:
                 ],
             },
         }
+
+        # For existing pages, retain manual Format tags. Add Video only when
+        # absent; omitting Format entirely avoids clobbering other selections.
+        current_formats = []
+        if existing_page is not None:
+            current_formats = (
+                existing_page.get("properties", {}).get("Format", {}).get("multi_select") or []
+            )
+        names = [
+            item["name"] for item in current_formats
+            if isinstance(item, dict) and isinstance(item.get("name"), str)
+        ]
+        if VIDEO_FORMAT not in names:
+            properties["Format"] = {
+                "multi_select": [{"name": name} for name in [*dict.fromkeys(names), VIDEO_FORMAT]],
+            }
 
         if status:
             properties["Status"] = {

@@ -373,6 +373,7 @@ def update_notion_from_videos(videos: list[dict]) -> dict:
                 notion_client.update_video_page(
                     page_id,
                     video_model,
+                    existing_page=existing,
                 )
                 updated += 1
                 print(f"UPDATE {video_model.title} [{video_model.video_id}]")

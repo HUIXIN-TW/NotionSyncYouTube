@@ -95,7 +95,7 @@ Required properties:
 | Property   | Type      | Notes                                      |
 | ---------- | --------- | ------------------------------------------ |
 | `Title`    | Title     | Video title                                |
-| `Format`   | Select    | Set to `Video`                             |
+| `Format`   | Multi-select | Include `Video`, preserve other formats     |
 | `Status`   | Status    | Set to `Backlog` only for newly created pages |
 | `URL`      | URL       | YouTube watch URL                          |
 | `Video ID` | Rich text | Deduplication key                          |

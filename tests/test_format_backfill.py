@@ -10,7 +10,7 @@ def page(page_id, category, format_name=None):
         "id": page_id,
         "properties": {
             "Category": {"select": {"name": category}},
-            "Format": {"select": {"name": format_name} if format_name else None},
+            "Format": {"multi_select": [{"name": format_name}] if format_name else []},
         },
     }
 
@@ -69,7 +69,7 @@ class FormatBackfillTests(unittest.TestCase):
         self.assertEqual(len(updates), 5)
         self.assertEqual(
             updates[0][2]["properties"],
-            {"Format": {"select": {"name": "Video"}}},
+            {"Format": {"multi_select": [{"name": "Video"}]}},
         )
         self.assertTrue(all("Category" not in req[2]["properties"] for req in updates))
 

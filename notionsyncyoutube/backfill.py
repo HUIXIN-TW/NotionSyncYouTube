@@ -41,7 +41,7 @@ def collect_candidates(http: HttpClient, *, token: str, data_source_id: str) -> 
 
     while True:
         payload: dict[str, Any] = {
-            "filter": {"property": "Format", "select": {"is_empty": True}},
+            "filter": {"property": "Format", "multi_select": {"is_empty": True}},
             "page_size": 100,
         }
         if cursor:
@@ -51,10 +51,10 @@ def collect_candidates(http: HttpClient, *, token: str, data_source_id: str) -> 
         for page in response.get("results", []):
             properties = page.get("properties", {})
             category = (properties.get("Category", {}).get("select") or {}).get("name")
-            current_format = (properties.get("Format", {}).get("select") or {}).get("name")
+            current_formats = properties.get("Format", {}).get("multi_select") or []
             target_format = FORMAT_BY_CATEGORY.get(category)
             page_id = page.get("id")
-            if page_id and target_format and not current_format:
+            if page_id and target_format and not current_formats:
                 candidates.append(Candidate(page_id, category, target_format))
 
         if not response.get("has_more", False):
@@ -91,7 +91,7 @@ def backfill(
                     "Content-Type": "application/json",
                 },
                 json_body={
-                    "properties": {"Format": {"select": {"name": candidate.format}}},
+                    "properties": {"Format": {"multi_select": [{"name": candidate.format}]}},
                 },
             )
             result["updated"] += 1
