@@ -53,7 +53,6 @@ class YouTubeInboxSync:
                     self.notion_client.update_video_page(
                         page_id,
                         video,
-                        category=self.config.default_category,
                     )
                     updated += 1
                     print(f"UPDATE {video.title} [{video.video_id}]")
@@ -61,7 +60,6 @@ class YouTubeInboxSync:
 
                 self.notion_client.create_video_page(
                     video,
-                    category=self.config.default_category,
                     status=self.config.default_status,
                     use_default_template=self.config.use_default_template,
                 )

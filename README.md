@@ -109,7 +109,7 @@ The Notion database must contain these properties:
 | Property   | Type      | Description                                     |
 | ---------- | --------- | ----------------------------------------------- |
 | `Title`    | Title     | Video title from YouTube.                       |
-| `Category` | Select    | Static value set to `Youtube`.                  |
+| `Format`   | Select    | Static value set to `Video`.                    |
 | `Status`   | Status    | Set to `Backlog` only when creating new pages.  |
 | `URL`      | URL       | Canonical YouTube watch URL.                    |
 | `Video ID` | Rich text | Stable YouTube video ID used for deduplication. |
@@ -134,8 +134,10 @@ The `Length` select options must match exactly:
 - New videos create new Notion pages.
 - New pages apply the Notion default template when `NOTION_USE_DEFAULT_TEMPLATE=true`.
 - Existing pages are found by `Video ID`.
-- Existing pages are updated for metadata such as title, URL, category, and length.
+- Existing pages are updated for metadata such as title, URL, format, and length.
 - Existing page `Status` is preserved, so `Active` or `Done` is not reset to `Backlog`.
+- `Category` is not required, read, or written; existing values are left untouched.
+- The `Format` select option `Video` must exist in the Notion data source.
 - Deleted/private YouTube placeholders are skipped.
 - The script does not delete Notion pages or remove videos from YouTube.
 
