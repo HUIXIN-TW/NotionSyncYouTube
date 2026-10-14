@@ -7,3 +7,15 @@ requires-python = ">=3.10"
 dependencies = [
     "yt-dlp>=2025.12.8",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff==0.16.8",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+"script/fetch-to-notion.py" = ["E402"]
+"script/backfill-format.py" = ["E402"]

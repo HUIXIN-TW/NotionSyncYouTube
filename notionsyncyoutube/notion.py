@@ -11,7 +11,6 @@ VIDEO_FORMAT = "Video"
 
 
 class NotionClient:
-
     def __init__(
         self,
         token: str,
@@ -181,15 +180,21 @@ class NotionClient:
         current_formats = []
         if existing_page is not None:
             current_formats = (
-                existing_page.get("properties", {}).get("Format", {}).get("multi_select") or []
+                existing_page.get("properties", {})
+                .get("Format", {})
+                .get("multi_select")
+                or []
             )
         names = [
-            item["name"] for item in current_formats
+            item["name"]
+            for item in current_formats
             if isinstance(item, dict) and isinstance(item.get("name"), str)
         ]
         if VIDEO_FORMAT not in names:
             properties["Format"] = {
-                "multi_select": [{"name": name} for name in [*dict.fromkeys(names), VIDEO_FORMAT]],
+                "multi_select": [
+                    {"name": name} for name in [*dict.fromkeys(names), VIDEO_FORMAT]
+                ],
             }
 
         if status:

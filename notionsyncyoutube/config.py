@@ -95,7 +95,9 @@ class Config:
             ),
             notion_data_source_id=notion_data_source_id,
             notion_version=os.getenv("NOTION_VERSION")
-            or (NOTION_DATA_SOURCE_VERSION if notion_data_source_id else NOTION_VERSION),
+            or (
+                NOTION_DATA_SOURCE_VERSION if notion_data_source_id else NOTION_VERSION
+            ),
             use_default_template=env_bool(
                 "NOTION_USE_DEFAULT_TEMPLATE",
                 DEFAULT_USE_DEFAULT_TEMPLATE,

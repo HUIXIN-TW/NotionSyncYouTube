@@ -28,7 +28,9 @@ class Candidate:
     format: str
 
 
-def collect_candidates(http: HttpClient, *, token: str, data_source_id: str) -> list[Candidate]:
+def collect_candidates(
+    http: HttpClient, *, token: str, data_source_id: str
+) -> list[Candidate]:
     """Snapshot all eligible IDs before any writes so pagination remains stable."""
     headers = {
         "Authorization": f"Bearer {token}",
@@ -46,7 +48,9 @@ def collect_candidates(http: HttpClient, *, token: str, data_source_id: str) -> 
         }
         if cursor:
             payload["start_cursor"] = cursor
-        response = http.request_json("POST", endpoint, headers=headers, json_body=payload)
+        response = http.request_json(
+            "POST", endpoint, headers=headers, json_body=payload
+        )
 
         for page in response.get("results", []):
             properties = page.get("properties", {})
@@ -77,8 +81,10 @@ def backfill(
     candidates = collect_candidates(http, token=token, data_source_id=data_source_id)
     result = {"candidates": len(candidates), "updated": 0, "failed": 0}
     for candidate in candidates:
-        print(f"{'APPLY' if apply else 'DRY RUN'} {candidate.page_id} "
-              f"{candidate.category} -> {candidate.format}")
+        print(
+            f"{'APPLY' if apply else 'DRY RUN'} {candidate.page_id} "
+            f"{candidate.category} -> {candidate.format}"
+        )
         if not apply:
             continue
         try:
@@ -91,7 +97,9 @@ def backfill(
                     "Content-Type": "application/json",
                 },
                 json_body={
-                    "properties": {"Format": {"multi_select": [{"name": candidate.format}]}},
+                    "properties": {
+                        "Format": {"multi_select": [{"name": candidate.format}]}
+                    },
                 },
             )
             result["updated"] += 1

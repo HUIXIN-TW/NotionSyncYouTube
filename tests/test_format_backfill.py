@@ -49,10 +49,16 @@ class FormatBackfillTests(unittest.TestCase):
     def test_snapshot_skips_already_classified_and_unsupported_types(self):
         http = FakeHttp()
         rows = collect_candidates(http, token="token", data_source_id="ds")
-        self.assertEqual([(r.page_id, r.format) for r in rows], [
-            ("v1", "Video"), ("v3", "Video"), ("v4", "Ebook"),
-            ("v5", "Audio"), ("v6", "Audio"),
-        ])
+        self.assertEqual(
+            [(r.page_id, r.format) for r in rows],
+            [
+                ("v1", "Video"),
+                ("v3", "Video"),
+                ("v4", "Ebook"),
+                ("v5", "Audio"),
+                ("v6", "Audio"),
+            ],
+        )
         self.assertEqual(len(http.requests), 2)
         self.assertEqual(http.requests[1][2]["start_cursor"], "cursor2")
 

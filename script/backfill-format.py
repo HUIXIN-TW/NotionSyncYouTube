@@ -16,7 +16,11 @@ from notionsyncyoutube.http import HttpClient
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--apply", action="store_true", help="Write changes to Notion (default is dry-run)")
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Write changes to Notion (default is dry-run)",
+    )
     args = parser.parse_args()
     load_dotenv_if_present()
     token = os.getenv("NOTION_TOKEN")

@@ -83,7 +83,9 @@ def resource_options(
     )
 
 
-def create_lambda_execution_role(resource_base_name: str) -> tuple[
+def create_lambda_execution_role(
+    resource_base_name: str,
+) -> tuple[
     aws.iam.Role,
     aws.iam.RolePolicyAttachment,
     aws.iam.RolePolicy,
@@ -167,9 +169,7 @@ for function_key, function_config in lambda_configs.items():
                 "NOTION_TOKEN_PARAMETER_NAME": notion_token_parameter_name,
                 "NOTION_DATABASE_ID": notion_database_id,
                 "NOTION_DATA_SOURCE_ID": notion_data_source_id,
-                "NOTION_USE_DEFAULT_TEMPLATE": str(
-                    notion_use_default_template
-                ).lower(),
+                "NOTION_USE_DEFAULT_TEMPLATE": str(notion_use_default_template).lower(),
                 "YOUTUBE_ENRICH_LENGTHS": str(youtube_enrich_lengths).lower(),
             }
         ),
