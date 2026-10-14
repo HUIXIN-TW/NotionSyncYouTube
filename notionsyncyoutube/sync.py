@@ -28,7 +28,9 @@ class YouTubeInboxSync:
         self.notion_client.verify_create_target(self.config.use_default_template)
 
         print("Fetching YouTube playlist items...")
-        videos = self.youtube_client.fetch_playlist_videos(self.config.youtube_playlist_id)
+        videos = self.youtube_client.fetch_playlist_videos(
+            self.config.youtube_playlist_id
+        )
         print(f"Fetched {len(videos)} YouTube videos.")
 
         videos = self._attach_lengths(videos)
@@ -47,7 +49,9 @@ class YouTubeInboxSync:
 
                     if not isinstance(page_id, str):
                         skipped += 1
-                        print(f"SKIP   {video.title} [{video.video_id}] missing Notion page id")
+                        print(
+                            f"SKIP   {video.title} [{video.video_id}] missing Notion page id"
+                        )
                         continue
 
                     self.notion_client.update_video_page(
@@ -85,7 +89,10 @@ class YouTubeInboxSync:
         durations = self.youtube_client.fetch_video_durations(video_ids)
 
         return [
-            video.with_length(self.duration_mapper.map_to_length(durations.get(video.video_id))) for video in videos
+            video.with_length(
+                self.duration_mapper.map_to_length(durations.get(video.video_id))
+            )
+            for video in videos
         ]
 
 

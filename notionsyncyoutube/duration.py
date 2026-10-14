@@ -11,7 +11,10 @@ LENGTH_60M_PLUS = "60m+"
 
 class DurationMapper:
     _youtube_duration_pattern = re.compile(
-        r"^PT" r"(?:(?P<hours>\d+)H)?" r"(?:(?P<minutes>\d+)M)?" r"(?:(?P<seconds>\d+)S)?$"
+        r"^PT"
+        r"(?:(?P<hours>\d+)H)?"
+        r"(?:(?P<minutes>\d+)M)?"
+        r"(?:(?P<seconds>\d+)S)?$"
     )
 
     def map_to_length(self, duration: str | None) -> str | None:

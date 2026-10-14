@@ -221,7 +221,9 @@ def enrich_video_lengths(videos: list[dict]) -> list[dict]:
             video["duration_seconds"] = duration
             video["length"] = map_duration_seconds_to_length(duration)
 
-            duration_label = f"{duration}s" if duration is not None else "unknown duration"
+            duration_label = (
+                f"{duration}s" if duration is not None else "unknown duration"
+            )
             length_label = video["length"] or "unknown length"
             print(
                 f"DETAIL {index}/{len(videos)} "
@@ -432,7 +434,11 @@ def parse_args() -> argparse.Namespace:
         nargs="?",
         default="sync",
         choices=("fetch", "update", "sync"),
-        help=("fetch: only fetch playlist to JSON; " "update: update Notion from JSON; " "sync: run fetch then update"),
+        help=(
+            "fetch: only fetch playlist to JSON; "
+            "update: update Notion from JSON; "
+            "sync: run fetch then update"
+        ),
     )
 
     parser.add_argument(
