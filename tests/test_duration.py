@@ -5,7 +5,9 @@ import unittest
 from notionsyncyoutube.duration import (
     LENGTH_16_30M,
     LENGTH_31_60M,
-    LENGTH_60M_PLUS,
+    LENGTH_61_120M,
+    LENGTH_121_180M,
+    LENGTH_180M_PLUS,
     LENGTH_LE_15M,
     DurationMapper,
 )
@@ -27,12 +29,30 @@ class DurationMapperTests(unittest.TestCase):
             (30 * 60, LENGTH_16_30M),
             (30 * 60 + 1, LENGTH_31_60M),
             (60 * 60, LENGTH_31_60M),
-            (60 * 60 + 1, LENGTH_60M_PLUS),
+            (60 * 60 + 1, LENGTH_61_120M),
+            (120 * 60, LENGTH_61_120M),
+            (120 * 60 + 1, LENGTH_121_180M),
+            (180 * 60, LENGTH_121_180M),
+            (180 * 60 + 1, LENGTH_180M_PLUS),
+            (10 * 60 * 60, LENGTH_180M_PLUS),
         )
 
         for seconds, expected in cases:
             with self.subTest(seconds=seconds):
                 self.assertEqual(expected, self.mapper.map_seconds_to_length(seconds))
+
+    def test_maps_long_youtube_durations_to_length_options(self) -> None:
+        cases = (
+            ("PT1H10M", LENGTH_61_120M),
+            ("PT2H", LENGTH_61_120M),
+            ("PT2H30M", LENGTH_121_180M),
+            ("PT3H", LENGTH_121_180M),
+            ("PT3H1S", LENGTH_180M_PLUS),
+        )
+
+        for duration, expected in cases:
+            with self.subTest(duration=duration):
+                self.assertEqual(expected, self.mapper.map_to_length(duration))
 
     def test_missing_or_zero_duration_has_no_length_option(self) -> None:
         self.assertIsNone(self.mapper.map_to_length(None))

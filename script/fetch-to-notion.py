@@ -192,7 +192,9 @@ def map_duration_seconds_to_length(duration_seconds: int | None) -> str | None:
       <= 15m
       16-30m
       31-60m
-      60m+
+      61-120m
+      121-180m
+      180m+ (strictly over 180 minutes)
     """
     return DurationMapper().map_seconds_to_length(duration_seconds)
 
