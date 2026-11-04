@@ -117,10 +117,7 @@ Length options must match exactly:
 180m+
 ```
 
-Upper bounds are inclusive; `180m+` means strictly over 180 minutes. Add the new
-options before running the updated script. Existing `60m+` values are replaced
-only for videos processed by `update` or `sync` with known durations. Keep the
-legacy option until reclassification is complete, and update filters using it.
+Upper bounds are inclusive; `180m+` means strictly over 180 minutes.
 
 ## Behavior
 
