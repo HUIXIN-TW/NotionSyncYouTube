@@ -112,8 +112,12 @@ Length options must match exactly:
 <= 15m
 16-30m
 31-60m
-60m+
+61-120m
+121-180m
+180m+
 ```
+
+Upper bounds are inclusive; `180m+` means strictly over 180 minutes.
 
 ## Behavior
 

@@ -126,8 +126,13 @@ The `Length` select options must match exactly:
 <= 15m
 16-30m
 31-60m
-60m+
+61-120m
+121-180m
+180m+
 ```
+
+Each upper bound is inclusive: exactly 120 minutes is `61-120m`, and exactly
+180 minutes is `121-180m`. Any duration over 180 minutes is `180m+`.
 
 ## Sync Behavior
 

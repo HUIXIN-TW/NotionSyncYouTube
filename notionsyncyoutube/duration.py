@@ -6,7 +6,9 @@ import re
 LENGTH_LE_15M = "<= 15m"
 LENGTH_16_30M = "16-30m"
 LENGTH_31_60M = "31-60m"
-LENGTH_60M_PLUS = "60m+"
+LENGTH_61_120M = "61-120m"
+LENGTH_121_180M = "121-180m"
+LENGTH_180M_PLUS = "180m+"
 
 
 class DurationMapper:
@@ -38,7 +40,13 @@ class DurationMapper:
         if minutes <= 60:
             return LENGTH_31_60M
 
-        return LENGTH_60M_PLUS
+        if minutes <= 120:
+            return LENGTH_61_120M
+
+        if minutes <= 180:
+            return LENGTH_121_180M
+
+        return LENGTH_180M_PLUS
 
     def to_seconds(self, duration: str) -> int:
         match = self._youtube_duration_pattern.match(duration)
